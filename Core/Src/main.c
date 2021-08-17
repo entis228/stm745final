@@ -152,7 +152,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   I_PWM.I_PWM_FaseA = 50;	//7% заполнения Ш�?М
 
-
+//5645
     ST7735_Init();
     ST7735_Backlight_On();
    // ST7735_Backlight_On();
