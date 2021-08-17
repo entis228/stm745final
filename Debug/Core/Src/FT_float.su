@@ -1,0 +1,3 @@
+FT_float.c:24:19:FFT20_float	48	static
+FT_float.c:50:19:FT_float	56	static
+FT_float.c:86:14:SquareRootRounded	32	static

@@ -1,0 +1,15 @@
+FlashSST25.c:17:6:InitSPI2	8	static
+FlashSST25.c:45:15:SPI_ReadWriteByte	32	static
+FlashSST25.c:73:10:SPI_ReadWriteWord	32	static
+FlashSST25.c:124:6:SPIFlashInit	16	static
+FlashSST25.c:221:6:SPIFlashReadArray	40	static
+FlashSST25.c:287:6:SPIFlashBeginWrite	16	static
+FlashSST25.c:321:6:SPIFlashWrite	24	static
+FlashSST25.c:385:6:SPIFlashWriteArray	24	static
+FlashSST25.c:519:6:SPIFlashEraseSector	24	static
+FlashSST25.c:568:6:SPIFlashEraseSST25	16	static
+FlashSST25.c:610:6:_SendCmd	16	static
+FlashSST25.c:644:6:_WaitWhileBusy	16	static
+FlashSST25.c:687:6:_GetStatus	24	static
+FlashSST25.c:710:6:sst26_pagewrite	32	static
+FlashSST25.c:748:6:sst26_globalunlock	8	static
