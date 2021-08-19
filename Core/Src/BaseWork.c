@@ -169,15 +169,18 @@ void BaseWork(void)
 //			StateU_FA = (uint16_t)((GPIOE->IDR>>2)) & 0x1f ;
 //			StateU_FB = (uint16_t)((GPIOE->IDR>>7)) & 0x1f ;
 //			StateU_FC = (uint16_t)((GPIOE->IDR>>12) & 0x1f) | ((uint32_t)(CP3_3_PIN_STATE & 0x1) << 4);
-
-
-			array_data.ValueADC_PSTN.IADC[0] =  (uint16_t)(ADC_Values1.Ud_kodInt[0]);// * 0.195 * 10);
-			array_data.ValueADC_PSTN.IADC[1] =  (uint16_t)(ADC_Values1.Ud_kodInt[1]);// * 0.195 * 10);
-			array_data.ValueADC_PSTN.IADC[2] =  (uint16_t)(ADC_Values1.Ud_kodInt[2]);// * 0.0303835 * 10);
-			array_data.ValueADC_PSTN.IADC[3] =  (uint16_t)(ADC_Values1.Ud_kodInt[3] * 0.0552285);
+			float voltPN  = 0;
+			float voltGN  = 0;
+			float AmperPh = 0;
+			float AmperN  = 0;
+			voltPN = (ADC_Values1.Ud_kodInt[0] * 0.40625);
+			voltGN =  (ADC_Values1.Ud_kodInt[1] * 0.40625);// * 0.195 * 10);
+			AmperPh =  (ADC_Values1.Ud_kodInt[2] * 0.015285);// * 0.0303835 * 10);
+			AmperN =  (ADC_Values1.Ud_kodInt[3] * 0.015285);
 			uint16_t TempOkrug;
 			TempOkrug = (uint16_t)temp;
-			demo(array_data.ValueADC_PSTN.IADC[0] ,array_data.ValueADC_PSTN.IADC[1],array_data.ValueADC_PSTN.IADC[2],array_data.ValueADC_PSTN.IADC[3]);
+			demofloat(voltPN,voltGN,AmperPh,AmperN);
+			//demo(array_data.ValueADC_PSTN.IADC[0] ,array_data.ValueADC_PSTN.IADC[1],array_data.ValueADC_PSTN.IADC[2],array_data.ValueADC_PSTN.IADC[3]);
 			masRezult +=TempOkrug;
 			//masRezult +=array_data.ValueADC_PSTN.IADC[3];
 			//k++;

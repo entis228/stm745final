@@ -8,6 +8,7 @@
 #include "BaseWork.h"
 #include "stm32f7xx_it.h"
 #include "FlashSST25.h"
+#include "string.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -106,6 +107,67 @@ static void MX_TIM4_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
+void checkPilot()
+{uint16_t l=0;
+ uint16_t masWrite[5];
+ char rez1[5];
+ char rez2[5];
+ char rez3[5];
+ char rez4[5];
+ char rez5[5];
+
+
+		masWrite[0] = (GPIOE ->IDR & (1<<2));
+		masWrite[1] = (GPIOE ->IDR & (1<<3));
+		masWrite[2] = (GPIOE ->IDR & (1<<4));
+		masWrite[3] = (GPIOE ->IDR & (1<<5));
+		masWrite[4] = (GPIOE ->IDR & (1<<6));
+		itoa(masWrite[0],rez1,10);
+		itoa(masWrite[1],rez2,10);
+		itoa(masWrite[2],rez3,10);
+		itoa(masWrite[3],rez4,10);
+		itoa(masWrite[4],rez5,10);
+	ST7735_DrawString(20,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+	ST7735_DrawString(40,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+	ST7735_DrawString(60,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+	ST7735_DrawString(80,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+	ST7735_DrawString(100,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+
+//	if((GPIOE->IDR(1<<2))==0)
+//	{
+//
+//	}
+}
+void demofloat(float  voltPN, float voltGN, float AmperPh, float AmperN)
+{
+	char voltPN1Char[10];
+
+	char voltGN1Char[10];
+
+	char AmperPh1Char[10];
+
+	char AmperN1Char[10];
+	//sprintf();
+	sprintf(AmperN1Char,"%3.2f",AmperN);
+	sprintf(voltGN1Char,"%3.2f",AmperN);
+	sprintf(voltPN1Char,"%3.2f",AmperN);
+	sprintf(AmperPh1Char,"%3.2f",AmperN);
+	//gcvt (voltPN,1,voltPN1Char);
+	//gcvt (voltGN,1,voltGN1Char);
+	//gcvt (AmperPh,1,AmperPh1Char);
+	//gcvt (AmperN,1,AmperN1Char);
+
+	ST7735_DrawString(0,0,  voltPN1Char  , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+
+	ST7735_DrawString(0,20, voltGN1Char , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+
+	ST7735_DrawString(0,40,  AmperPh1Char , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+
+	ST7735_DrawString(0,60, AmperN1Char , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+
+
+
+}
 void demo(uint16_t vol1, uint16_t vol2,uint16_t tok1,uint16_t tok2)
 {//
 	char vol11[5];
@@ -152,7 +214,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   I_PWM.I_PWM_FaseA = 50;	//7% заполнения Ш�?М
 
-//5645
+
     ST7735_Init();
     ST7735_Backlight_On();
    // ST7735_Backlight_On();
@@ -164,7 +226,10 @@ int main(void)
   while (1)
   {//ST7735_FillScreen(0x07E0);
 	  //while((statADCBuffRefresh & ADCBuffRefresh) == 0);
+	  ST7735_FillScreen(0x07E0);
 	 BaseWork();
+
+	// checkPilot();
 	  //demoView();
 
 	 // demo(per1,per1,per1,per1);

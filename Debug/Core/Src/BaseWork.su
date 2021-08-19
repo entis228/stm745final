@@ -1,8 +1,8 @@
 arm_math.h:5745:30:arm_sqrt_f32	16	static
 BaseWork.c:52:9:ComparSelectU_Ch1	16	static
 BaseWork.c:100:10:getADC	24	static
-BaseWork.c:119:6:BaseWork	32	static
-BaseWork.c:220:6:ReadADCValue	96	static
-BaseWork.c:231:6:ReadADCKoefFourie	96	static
-BaseWork.c:262:6:ReadValue_vt1	16	static
-BaseWork.c:270:6:ReadValue_vt2	16	static
+BaseWork.c:119:6:BaseWork	48	static
+BaseWork.c:223:6:ReadADCValue	96	static
+BaseWork.c:234:6:ReadADCKoefFourie	96	static
+BaseWork.c:265:6:ReadValue_vt1	16	static
+BaseWork.c:273:6:ReadValue_vt2	16	static

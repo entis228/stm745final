@@ -173,7 +173,7 @@ void readADC()
 
 				for(ch_idx = 0; ch_idx < ZSEM_CHANNEL_NUM; ch_idx++)
 							{
-								int32_t new_val1;
+								int16_t new_val1;
 
 
 								new_val1 = array_data.ValueADC_PSTN.IADC[ch_idx];
@@ -186,13 +186,16 @@ void readADC()
 
 void TIM3_IRQHandler(void)
 {
-	readADC();
+
 	TIM3->SR &= ~(TIM_SR_UIF);
 	SET_PILOT1;
   TIM4->ARR = I_PWM.I_PWM_FaseA*10;
+
 	START_TIM4();
 	statADCBuffRefresh |= ADCBuffRefresh;
+	readADC();
 	//ReadIntADC();
+
 }
 
 void TIM4_IRQHandler(void)

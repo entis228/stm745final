@@ -33,7 +33,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 void demo(uint16_t vol1, uint16_t vol2,uint16_t tok1,uint16_t tok2);
-
+void demofloat(float  voltPN, float voltGN, float AmperPh, float AmperN);
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

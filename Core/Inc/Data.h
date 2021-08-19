@@ -52,7 +52,7 @@
 					
 					//�������� ���� ������� 1�8 ��� 1, 1�8 ��� 2	
 					 struct __packed {
-						__IO uint16_t IADC[14];
+						__IO int16_t IADC[14];
 					} ValueADC_PSTN;
 
 					//������������ ����������
