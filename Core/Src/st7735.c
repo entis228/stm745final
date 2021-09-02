@@ -220,7 +220,7 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
 
     for(i = 0; i < font.height; i++)
     {
-        b = font.data[(ch - 32) * font.height + i];
+        b = font.data[(ch - 32) * font.height + i];//умножение строки на столбик
         for(j = 0; j < font.width; j++)
         {
             if((b << j) & 0x8000)

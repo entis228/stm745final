@@ -34,7 +34,7 @@ int16_t BufADC1[20] = {0,
 -809,
 -587,
 -309
-}; 
+};
 
 data_PSTN array_data;
 uint8_t statADCBuffRefresh = 0;
@@ -101,48 +101,68 @@ uint16_t getADC(uint16_t channel)
 {
   uint16_t tmp = 0;
  CLR_CE;                              // Select MCP3204 // сброс CS в ноль
-////  tmp = SPI_ReadWriteWord(0x18 | channel);                              // SPI communication using 8-bit segments
-//////  channel = channel << 14;                        // Bits 7 & 6 define ADC input
-////  tmp = SPI_ReadWriteWord(0);
 
-	SPI_ReadWriteByte(0x6);                              // SPI communication using 8-bit segments
-  channel = channel << 6;                        // Bits 7 & 6 define ADC input
-	tmp = 0;
-  tmp = SPI_ReadWriteByte(channel) & 0x0F;
-  tmp = tmp << 8;                                // Get ADC value
-  tmp |= SPI_ReadWriteByte(0);
+ tmp = 0;
+ uint16_t channel1=0;
+ channel1=0b000001100000 | (channel << 2);
+  SPI_ReadWriteByte(channel1);
+  tmp = SPI_ReadWriteByte(0b0);
+
   SET_CE;
   return tmp;
 }//~
 
 float32_t temp = 0;
+float voltPN  = 0;
+float voltGN  = 0;
+float AmperPh = 0;
+float AmperN  = 0;
+void ReadSensor()
+{
+	if(statADCBuffRefresh & ADCBuffRefresh)//0&1/////////////////
+			{
+
+				int ch_idx;
+
+
+				for(ch_idx = 0; ch_idx < ZSEM_CHANNEL_NUM; ch_idx++)
+				{
+
+					CoeffFourie_float ft;
+					CoeffFourie_float ft0;
+					//
+					ft = FFT20_float((short*)&ADC_Values1.data[ch_idx]);
+					ft0 = FT_float((short*)&ADC_Values1.data[ch_idx],0);
+					Value_vt1.KoefFourie[ch_idx].Re = ft.CoeffFourieA;
+					Value_vt1.KoefFourie[ch_idx].Im = ft.CoeffFourieB;
+					arm_sqrt_f32((float32_t)((ft.CoeffFourieA*ft.CoeffFourieA + ft.CoeffFourieB*ft.CoeffFourieB)* (float32_t)0.5),&temp);
+					ADC_Values1.Ud_kodInt[ch_idx] = (uint32_t)temp;
+					ADC_Values1.Ud_kodKonstInt[ch_idx] = (int16_t)ft0.CoeffFourieA;
+					if(ch_idx == 4)
+					{
+						ADC_Values1.Ud_kodKonstInt[ch_idx] = 0;//V0;
+					}
+					statADCBuffRefresh = 0;
+				}
+
+				voltPN = (ADC_Values1.Ud_kodInt[0] * 0.385416667);//0.385416667       0.40625
+				voltGN =  (ADC_Values1.Ud_kodInt[1] * 0.385416667);// * 0.195 * 10);
+				AmperPh =  (ADC_Values1.Ud_kodInt[2] * 0.015285);// * 0.0303835 * 10);
+				AmperN =  (ADC_Values1.Ud_kodInt[3] * 0.015285);
+			}
+	if(GPIOF->ODR & GPIO_PIN_4/*RESET_PILOT1*/)
+		{
+			ComparSelectU_Ch1();
+			StateU_FA = ((GPIOE->IDR>>2)) & 0x1f ;
+		}
+}
 void BaseWork(void)
 {
 		if(statADCBuffRefresh & ADCBuffRefresh)//0&1/////////////////
 		{
-//			uint16_t rezultOnDispley=0;
-//			int last_idx;
+
 			int ch_idx;
-//
-//			//SCB_CleanInvalidateDCache();
-//			statADCBuffRefresh &= ~ADCBuffRefresh;
-//			uint16_t ta=1000;
-////
-//			U1Cod = getADC(0);
-//			U2Cod = getADC(1);
-//			U3Cod = getADC(2);
-//			U4Cod = getADC(3);
-//
-//			array_data.ValueADC_PSTN.IADC[0] = U1Cod - V0;
-//			array_data.ValueADC_PSTN.IADC[1] = U2Cod - V0;
-//			array_data.ValueADC_PSTN.IADC[2] = U3Cod - V0;
-//			array_data.ValueADC_PSTN.IADC[3] = U4Cod - V0;
-//
-//			if(++ADC_Values1.idx == ADC_CH_BUF_LEN)
-//			{
-//				ADC_Values1.idx = 0;
-//			}
-//			last_idx = ADC_Values1.idx;
+
 
 			for(ch_idx = 0; ch_idx < ZSEM_CHANNEL_NUM; ch_idx++)
 			{
@@ -161,43 +181,22 @@ void BaseWork(void)
 				{
 					ADC_Values1.Ud_kodKonstInt[ch_idx] = 0;//V0;
 				}
+				statADCBuffRefresh = 0;
 			}
-
-//			ComparSelectU_Ch1();
-//			ComparSelectU_Ch2();
-//			ComparSelectU_Ch3();
-//			StateU_FA = (uint16_t)((GPIOE->IDR>>2)) & 0x1f ;
-//			StateU_FB = (uint16_t)((GPIOE->IDR>>7)) & 0x1f ;
-//			StateU_FC = (uint16_t)((GPIOE->IDR>>12) & 0x1f) | ((uint32_t)(CP3_3_PIN_STATE & 0x1) << 4);
 			float voltPN  = 0;
 			float voltGN  = 0;
 			float AmperPh = 0;
 			float AmperN  = 0;
-			voltPN = (ADC_Values1.Ud_kodInt[0] * 0.40625);
-			voltGN =  (ADC_Values1.Ud_kodInt[1] * 0.40625);// * 0.195 * 10);
+			voltPN = (ADC_Values1.Ud_kodInt[0] * 0.385416667);//0.385416667       0.40625
+			voltGN =  (ADC_Values1.Ud_kodInt[1] * 0.385416667);// * 0.195 * 10);
 			AmperPh =  (ADC_Values1.Ud_kodInt[2] * 0.015285);// * 0.0303835 * 10);
 			AmperN =  (ADC_Values1.Ud_kodInt[3] * 0.015285);
 			uint16_t TempOkrug;
 			TempOkrug = (uint16_t)temp;
 			demofloat(voltPN,voltGN,AmperPh,AmperN);
-			//demo(array_data.ValueADC_PSTN.IADC[0] ,array_data.ValueADC_PSTN.IADC[1],array_data.ValueADC_PSTN.IADC[2],array_data.ValueADC_PSTN.IADC[3]);
+			demoV0(U2Cod);
 			masRezult +=TempOkrug;
-			//masRezult +=array_data.ValueADC_PSTN.IADC[3];
-			//k++;
-//			if(k==100)
-//				{k=0;
-//				rezultOnDispley =masRezult / 100;
-//				demo(array_data.ValueADC_PSTN.IADC[0] ,array_data.ValueADC_PSTN.IADC[1],array_data.ValueADC_PSTN.IADC[2],rezultOnDispley);
-//				masRezult=0;
-//				}
-//			array_data.ValueADC_PSTN.IADC[4] =  (uint16_t)(ADC_Values1.Ud_kodInt[4] * 0.0303835 * 10);
-//			array_data.ValueADC_PSTN.IADC[5] =  (uint16_t)(ADC_Values1.Ud_kodInt[5] * 0.0303835 * 10);
-//			array_data.ValueADC_PSTN.IADC[6] =  (uint16_t)(ADC_Values1.Ud_kodInt[6] * 0.0303835 * 10);
-//			array_data.ValueADC_PSTN.IADC[7] =  (uint16_t)(ADC_Values1.Ud_kodInt[7] * 0.0303835 * 10);
-//			array_data.ValueADC_PSTN.IADC[8] =  (uint16_t)(ADC_Values1.Ud_kodInt[8] * 0.0303835 * 100);
-//			array_data.name_param.data_PSTN[0].ValueADC_PSTN.IADC[9] =  (uint16_t)(ADC_Values1.Ud_kodInt[9] * 0.0303835 * 100);
-//			array_data.name_param.data_PSTN[0].ValueADC_PSTN.IADC[10] =  (uint16_t)(ADC_Values1.Ud_kodInt[10] * 0.0303835 * 100);
-//			array_data.name_param.data_PSTN[0].ValueADC_PSTN.IADC[11] =  (uint16_t)(ADC_Values1.Ud_kodInt[11] * (3.3/4096) * 100);
+
 
 		}
 
@@ -206,18 +205,7 @@ void BaseWork(void)
 			ComparSelectU_Ch1();
 			StateU_FA = ((GPIOE->IDR>>2)) & 0x1f ;
 		}
-//
-//		if(GPIOF->ODR & GPIO_PIN_5/*RESET_PILOT2*/)
-//		{
-//			ComparSelectU_Ch2();
-//			compareSelectU.StateU_FB = (~(GPIOE->IDR>>7)) & 0x1f ;
-//		}
 
-//		if(GPIOF->ODR & GPIO_PIN_6/*RESET_PILOT3*/)
-//		{
-//			ComparSelectU_Ch3();
-//			compareSelectU.StateU_FC = (~(GPIOE->IDR>>12)) & 0x1f | ((uint32_t)(~CP3_3_PIN_STATE & 0x1) << 4);
-//		}
 }
 ////////////////////////////////////////////////
 void ReadADCValue(unsigned char comnum)
@@ -226,8 +214,8 @@ void ReadADCValue(unsigned char comnum)
 	
  	memcpy(Buf,(unsigned char*)ADC_Values1.Ud_kodInt,9*2); 
 	memcpy((void*)&Buf[18], (unsigned char*)ADC_Values1.Ud_kodKonstInt, 9*2);
-// 	memcpy(&Buf[16],(unsigned char*)ADC_Values2.Ud_kodInt,8*2); 
-	
+// 	memcpy(&Buf[16],(unsigned char*)ADC_Values2.Ud_kodInt,8*2);
+
 //	PackToHDLC(0, (uint8_t*)Buf ,36, cmReadADCValue, comnum);
 }
 /////////////////////////////////////////////////

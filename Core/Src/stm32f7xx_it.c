@@ -143,8 +143,9 @@ void TIM4_Init(void)
 	STOP_TIM4();
 }
 data_PSTN array_data;
-const uint16_t V0 = 2240;
+const uint16_t V0 = 2233;
 //uint8_t statADCBuffRefresh = 0;
+
 void readADC()
 {
 	//uint16_t rezultOnDispley=0;
@@ -152,7 +153,7 @@ void readADC()
 				int ch_idx;
 
 				//SCB_CleanInvalidateDCache();
-				statADCBuffRefresh &= ~ADCBuffRefresh;
+				//statADCBuffRefresh &= ~ADCBuffRefresh;
 
 	//
 				U1Cod = getADC(0);
@@ -188,13 +189,17 @@ void TIM3_IRQHandler(void)
 {
 
 	TIM3->SR &= ~(TIM_SR_UIF);
+	checkPilot121();
 	SET_PILOT1;
   TIM4->ARR = I_PWM.I_PWM_FaseA*10;
 
 	START_TIM4();
-	statADCBuffRefresh |= ADCBuffRefresh;
+
 	readADC();
-	//ReadIntADC();
+	checkPilot();
+	statADCBuffRefresh |= ADCBuffRefresh;
+
+
 
 }
 

@@ -34,6 +34,10 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 void demo(uint16_t vol1, uint16_t vol2,uint16_t tok1,uint16_t tok2);
 void demofloat(float  voltPN, float voltGN, float AmperPh, float AmperN);
+void checkPilot();
+void checkPilot121();
+void demoV0(uint16_t demo);
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -198,6 +202,7 @@ typedef  struct
 //Óïðàâëåíèå PILOT ñèãíàëàìè
 #define SET_PILOT1 (GPIOD->ODR &= ~LL_GPIO_PIN_4)
 #define RESET_PILOT1 (GPIOD->ODR |= LL_GPIO_PIN_4)
+
 
 /* USER CODE END Private defines */
 

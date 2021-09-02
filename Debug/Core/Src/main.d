@@ -34,6 +34,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/stm32f7xx_ll_gpio.h ../Core/Inc/stm32f7xx_ll_bus.h \
  ../Core/Inc/stm32f7xx_ll_gpio.h ../Core/Inc/st7735.h ../Core/Inc/fonts.h \
  ../Core/Inc/st7735_cfg.h ../Core/Inc/main.h ../Core/Inc/testimg.h \
+ ../Core/Inc/image1preview.h ../Core/Inc/image2ChargeIsOver.h \
+ ../Core/Inc/image3ConnectorRemoved.h ../Core/Inc/image4PlagIn.h \
+ ../Core/Inc/image5WaitForTheStart.h ../Core/Inc/image6ChargeStart.h \
  ../Core/Inc/Data.h ../Core/Inc/BaseWork.h ../Core/Inc/stm32f7xx_it.h \
  ../Core/Inc/FlashSST25.h
 
@@ -118,6 +121,18 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/main.h:
 
 ../Core/Inc/testimg.h:
+
+../Core/Inc/image1preview.h:
+
+../Core/Inc/image2ChargeIsOver.h:
+
+../Core/Inc/image3ConnectorRemoved.h:
+
+../Core/Inc/image4PlagIn.h:
+
+../Core/Inc/image5WaitForTheStart.h:
+
+../Core/Inc/image6ChargeStart.h:
 
 ../Core/Inc/Data.h:
 

@@ -211,7 +211,7 @@ void SPIFlashWriteArray(uint8_t* vData, uint16_t wLen);
 void SPIFlashEraseSST25(void);
 void sst26_pagewrite(uint8_t *buffer, uint16_t page);
 void sst26_globalunlock(void);
-unsigned char SPI_ReadWriteByte(unsigned char data_write);
+uint16_t SPI_ReadWriteByte(uint16_t data_write);
 uint16_t SPI_ReadWriteWord(uint16_t data_write); 
 
 #endif

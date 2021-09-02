@@ -19,13 +19,13 @@ void InitSPI2(void)
   /*##-1- Configure the SPI peripheral #######################################*/
   /* Set the SPI parameters */
   SpiHandle.Instance               = SPI2;
-  SpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  SpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;//при делители 32 V0 = 2232
   SpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
-  SpiHandle.Init.CLKPhase          = SPI_PHASE_2EDGE;
-  SpiHandle.Init.CLKPolarity       = SPI_POLARITY_HIGH;
+  SpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;
+  SpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW;
   SpiHandle.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLED;
   SpiHandle.Init.CRCPolynomial     = 7;
-  SpiHandle.Init.DataSize          = SPI_DATASIZE_8BIT;
+  SpiHandle.Init.DataSize          = SPI_DATASIZE_12BIT;
   SpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
   SpiHandle.Init.NSS               = SPI_NSS_SOFT;
   SpiHandle.Init.TIMode            = SPI_TIMODE_DISABLED;
@@ -42,12 +42,12 @@ void InitSPI2(void)
 	
 }	
 //------------------------------------------------------------------------------------
-unsigned char SPI_ReadWriteByte(unsigned char data_write) 
+uint16_t SPI_ReadWriteByte(uint16_t data_write)
 { 
-  unsigned char data_read = 0;
+  uint16_t data_read = 0;
 	
-	unsigned char aTxSPIBuffer[2]; 
-	unsigned char aRxSPIBuffer[2];
+    uint16_t aTxSPIBuffer[2];
+	uint16_t aRxSPIBuffer[2];
 	
 	
 	aTxSPIBuffer[0] = data_write;
@@ -66,7 +66,7 @@ unsigned char SPI_ReadWriteByte(unsigned char data_write)
   }
 
 	data_read = aRxSPIBuffer[0];
-  return (unsigned char)data_read; 
+  return data_read;
 }
 
 //------------------------------------------------------------------------------------

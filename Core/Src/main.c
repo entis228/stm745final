@@ -3,6 +3,12 @@
 #include "stm32f7xx_ll_gpio.h"
 #include "st7735.h"
 #include "testimg.h"
+#include "image1preview.h"
+#include "image2ChargeIsOver.h"
+#include "image3ConnectorRemoved.h"
+#include "image4PlagIn.h"
+#include "image5WaitForTheStart.h"
+#include "image6ChargeStart.h"
 #include "Data.h"
 #include <stdlib.h>
 #include "BaseWork.h"
@@ -10,6 +16,14 @@
 #include "FlashSST25.h"
 #include "string.h"
 /* Private includes ----------------------------------------------------------*/
+#define EnableTim               (TIM3->CR1 |= TIM_CR1_CEN)
+#define DisableTim              (TIM3->CR1 &= (0b1111111111111110))
+#define ClearTimCount           (TIM3->CNT = 0)
+#define ClearTimeFlag           (TIM3->SR = (0b1111111111111110))
+#define EnableTimA               (TIM4->CR1 |= TIM_CR1_CEN)
+#define DisableTimA             (TIM4->CR1 &= 0b1111111111111110)
+#define ClearTimCountA         (TIM4->CNT = 0)
+#define ClearTimeFlagA           (TIM4->SR = (0b1111111111111110))
 /* USER CODE BEGIN Includes */
 
 DMA_HandleTypeDef hdma_spi1_tx;
@@ -28,51 +42,31 @@ uint8_t r = 0;
 /* USER CODE BEGIN PTD */
 void demoView(void)
 {
-char sd[] = "45";
-char af[] = "1234567890=!#2";
-itoa(statADCBuffRefresh,sd,10);
-strcat(af ,sd);
-//
-//ST7735_DrawString(0, 0, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 18, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 36, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 54, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 72, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 90, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 108, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//ST7735_DrawString(0, 126, af , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-//	HAL_Delay(500);
-	//ST7735_FillScreen(0x07E0);
+//char sd[] = "  Portable         charging          station";
 
 
-		ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) test_img_128x128);
+		ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) fon_img_160x128);
 		HAL_Delay(3000);
+		ST7735_FillScreen(0x07E0);
+		ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) imege1peview_160x128);
+		//ST7735_DrawString(0, 0, sd , Font_11x18, ST7735_BLACK, 0x07E0);
+		HAL_Delay(3000);
+		ST7735_FillScreen(0x07E0);
+
 }
 
 
-void demoTFT(void)
+void StopTimer()
 {
-	//ST7735_SetRotation(r);
-
-	ST7735_FillScreen(ST7735_BLACK);
-
-
-	ST7735_DrawString(0, 0, "Font_7x10, red on black, lorem ipsum dolor sit amet", Font_7x10, ST7735_RED, ST7735_BLACK);
-	ST7735_DrawString(0, 3*10, "Font_11x18, green, lorem ipsum", Font_11x18, ST7735_GREEN, ST7735_BLACK);
-//
+	DisableTim;
+	ClearTimCount;
+	ClearTimeFlag;
+	DisableTimA;
+	ClearTimCountA;
+	ClearTimeFlagA;
+	SET_PILOT1;
 }
-/* USER CODE END PTD */
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
@@ -82,9 +76,7 @@ TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart2;
 
-/* USER CODE BEGIN PV */
 
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
@@ -94,150 +86,387 @@ static void MX_SPI2_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
+uint16_t pilotSignal= 00000;
+uint16_t pilotSave=00000;
+int counter121=0;
+int counterPilot[4];
+uint8_t flagGround=0;
+uint8_t Statusflag=0;
+uint8_t PreviousState=0;
+uint8_t rezult = 0;
+uint16_t counterTok=0;
+uint8_t VoltPilotStatus=9;
+uint16_t counterLength=100;//переменная для
+uint16_t circle=0;
+uint32_t startChrgeTime;//переменная для хранения начала заряда
+uint32_t finishChrgeTime;//переменная для хранения конца заряда
+uint32_t currentOneTimeperiod;
+float koof =0.1;
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
+void checkPilot121()
+{
+	// pilotSignal= 00000;
+//	pilotSignal=pilotSignal | (( GPIOE ->IDR & (1<<2))  >= 1);
+//	circle=pilotSignal;
+if((GPIOE ->IDR & (1<<2))  >= 1)
+	{
+			counter121++;
+			if(counter121>=500)
+			{	flagGround=0;
+				pilotSignal = pilotSignal | 0b00001;
+			}
+			if(counter121>=510)
+			{   flagGround=0;
+				counter121=510;
+			}
+	 }
+	else
+		{
+		counter121--;
+		if(counter121<=10)
+		{	flagGround=1;
+			pilotSignal = pilotSignal & 0b11110;
+		}
+		if(counter121<0)
+		{	flagGround=1;
+			counter121=0;
+		}
+		}
+}
 void checkPilot()
-{uint16_t l=0;
- uint16_t masWrite[5];
- char rez1[5];
- char rez2[5];
- char rez3[5];
- char rez4[5];
- char rez5[5];
+{
+	uint8_t i=0;
+uint8_t flagg=0;
+//		pilotSignal = 	pilotSignal | (((GPIOE ->IDR & (1<<3))  >= 1)<< 1);
+//		pilotSignal = 	pilotSignal | (((GPIOE ->IDR & (1<<4))  >= 1)<< 2);
+//		pilotSignal = 	pilotSignal | (((GPIOE ->IDR & (1<<5))  >= 1)<< 3);
+//		pilotSignal = 	pilotSignal | (((GPIOE ->IDR & (1<<6))  >= 1)<< 4);
+	for(i=0;i<4;i++)
+	{
+	if((GPIOE ->IDR & (1<<(3+i)))  >= 1)
+		{
+				counterPilot[i]++;
+				if(counterPilot[i]>=500)
+				{
+					pilotSignal = pilotSignal | (0b00010<<i);
+				}
+				if(counterPilot[i]>=510)
+				{
+					counterPilot[i]=510;
+				}
+		 }
+		else
+			{
+			counterPilot[i]--;
+			if(counterPilot[i]<=10)
+			{flagg=0b11111 ^ (0b00010<<i);
+				pilotSignal = pilotSignal & (flagg);
+			}
+			if(counterPilot[i]<0)
+			{
+				counterPilot[i]=0;
+			}
+			}
+	}
+
+}
+void demoPilotSignal()
+{char V0Char[10];
+//sprintf(V0Char,"%3.2f",pilotSignal);
+	itoa(pilotSignal,V0Char,2);
+		ST7735_DrawString(100,100, V0Char , Font_11x18, ST7735_BLACK, 0x07E0);
 
 
-		masWrite[0] = (GPIOE ->IDR & (1<<2));
-		masWrite[1] = (GPIOE ->IDR & (1<<3));
-		masWrite[2] = (GPIOE ->IDR & (1<<4));
-		masWrite[3] = (GPIOE ->IDR & (1<<5));
-		masWrite[4] = (GPIOE ->IDR & (1<<6));
-		itoa(masWrite[0],rez1,10);
-		itoa(masWrite[1],rez2,10);
-		itoa(masWrite[2],rez3,10);
-		itoa(masWrite[3],rez4,10);
-		itoa(masWrite[4],rez5,10);
-	ST7735_DrawString(20,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(40,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(60,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(80,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(100,40, rez1 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
 
-//	if((GPIOE->IDR(1<<2))==0)
-//	{
-//
-//	}
+}
+
+float expRunningAverage(float newVal)
+{
+  static float filVal = 0;
+  filVal += (newVal - filVal) * koof;
+  return filVal;
 }
 void demofloat(float  voltPN, float voltGN, float AmperPh, float AmperN)
 {
-	char voltPN1Char[10];
 
-	char voltGN1Char[10];
+	char voltPNChar[10];
+	char voltGNChar[10];
+	char AmperPhChar[10];
+	char AmperNChar[10];
+	char EnergyRez[10];
+	char PowerRez[10];
+	float Energy=0;
+	float SPower=0;
 
-	char AmperPh1Char[10];
+	voltPN=expRunningAverage(voltPN);//Экспоненциальный фильтр
 
-	char AmperN1Char[10];
-	//sprintf();
-	sprintf(AmperN1Char,"%3.2f",AmperN);
-	sprintf(voltGN1Char,"%3.2f",AmperN);
-	sprintf(voltPN1Char,"%3.2f",AmperN);
-	sprintf(AmperPh1Char,"%3.2f",AmperN);
-	//gcvt (voltPN,1,voltPN1Char);
-	//gcvt (voltGN,1,voltGN1Char);
-	//gcvt (AmperPh,1,AmperPh1Char);
-	//gcvt (AmperN,1,AmperN1Char);
+	currentOneTimeperiod=HAL_GetTick();
+	SPower=voltPN*AmperPh;
+	Energy=SPower*(currentOneTimeperiod-startChrgeTime)/3600000000;//подкоректировать с учетом частоты микроконтроллераа
 
-	ST7735_DrawString(0,0,  voltPN1Char  , Font_11x18, ST7735_WHITE, ST7735_BLACK);
 
-	ST7735_DrawString(0,20, voltGN1Char , Font_11x18, ST7735_WHITE, ST7735_BLACK);
 
-	ST7735_DrawString(0,40,  AmperPh1Char , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+	sprintf(voltPNChar,"%3.2f",voltPN);
+	//sprintf(voltGNChar,"%3.2f",voltGN);
+	sprintf(AmperPhChar,"%3.2f",AmperPh);
+	//sprintf(AmperNChar,"%3.2f",AmperN);
+	sprintf(PowerRez,"%3.2f",SPower);
+	sprintf(EnergyRez,"%3.2f",Energy);
 
-	ST7735_DrawString(0,60, AmperN1Char , Font_11x18, ST7735_WHITE, ST7735_BLACK);
+	ST7735_DrawString(80,0,  voltPNChar  , Font_11x18, ST7735_BLACK, 0x07E0);
+//	ST7735_DrawString(80,20, voltGNChar , Font_11x18, ST7735_BLACK, 0x07E0);
+	ST7735_DrawString(80,20,  AmperPhChar , Font_11x18, ST7735_BLACK, 0x07E0);
+//	ST7735_DrawString(80,60, AmperNChar , Font_11x18, ST7735_BLACK, 0x07E0);
+	ST7735_DrawString(80,40, PowerRez , Font_11x18, ST7735_BLACK, 0x07E0);
+	ST7735_DrawString(80,60,  EnergyRez , Font_11x18, ST7735_BLACK, 0x07E0);
+
+}
+void interface()
+{
+	ST7735_DrawString(0,0,  "V" , Font_11x18, ST7735_BLACK, 0x07E0);
+	ST7735_DrawString(0,20, "A" , Font_11x18, ST7735_BLACK, 0x07E0);
+	ST7735_DrawString(0,40, "P "   , Font_11x18, ST7735_BLACK, 0x07E0);
+	ST7735_DrawString(0,60, "E "  , Font_11x18, ST7735_BLACK, 0x07E0);
+}
+void demoV0(uint16_t demo)
+{char V0Char[5];
+itoa(demo,V0Char,10);
+	ST7735_DrawString(0,100, V0Char , Font_11x18, ST7735_BLACK, 0x07E0);
+}
+void contactor(uint8_t OnOrOff)
+{
+	if(OnOrOff == 1 )
+	{
+		GPIOD->ODR |= (1<<1);
+	}
+	else
+	{
+		GPIOD->ODR &= ~(1<<1);
+	}
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+void CheckPilotStart()
+{
+	if(((GPIOE ->IDR & (1<<3))  >= 1) && VoltPilotStatus == 9)
+	{
+		MX_TIM3_Init();
+		HAL_TIM_Base_Start_IT(&htim3);
+		 VoltPilotStatus = 6;
+	}
+}
+uint8_t hargeflagg=0;
+void CheckSensorParameters(uint16_t PilotStatus)
+{
+	ReadSensor();
+
+     if(voltGN  < 20 && AmperN < 1 && voltPN<250 && (PilotStatus==0b110||PilotStatus==0b1110))//change amperN coof
+		 {	   contactor(1);  //add function contact closures
+
+    	 	 Statusflag=11;
+
+    	 	 if(voltPN>200 )
+    	 	 {	circle++;
+    	 		 if(circle>counterLength)
+    	 		 {circle=0;
+    	 			 I_PWM.I_PWM_FaseA+=3;
+    	 				if(I_PWM.I_PWM_FaseA>=54)
+    	 				{
+    	 					I_PWM.I_PWM_FaseA=54;
+    	 				} 							//add function increase ampers
+    	 		 }
+    	 	 }
+    	 	 else
+    	 	 {
+    	 		I_PWM.I_PWM_FaseA-=3;
+    	 				if(I_PWM.I_PWM_FaseA<=10)
+    	 				{I_PWM.I_PWM_FaseA=0;}
+    	 												//add function reduction ampers
+    	 	 }
+		 }
+     else
+     {I_PWM.I_PWM_FaseA=7;
+    	 contactor(0); 	 //add function opening contacts
+    	Statusflag=1;//error ground
+     }
+
+
 
 
 
 }
-void demo(uint16_t vol1, uint16_t vol2,uint16_t tok1,uint16_t tok2)
-{//
-	char vol11[5];
-	char vol12[5];
-	char tok11[5];
-	char tok12[5];
-	itoa(vol1,vol11,10);
-	itoa(vol2,vol12,10);
-	itoa(tok1,tok11,10);
-	itoa(tok2,tok12,10);
-	ST7735_DrawString(0,40, tok11 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(0,60, tok12 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(0,0, vol11 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-	ST7735_DrawString(0,20, vol12 , Font_11x18, ST7735_WHITE, ST7735_BLACK);
-}
+void ProgramCycle()
+{
+	pilotSave=pilotSignal;
+CheckSensorParameters(pilotSave);
 
+	if((hargeflagg==1) && (pilotSave==0b10))
+			{
+		startChrgeTime=0;
+		finishChrgeTime=HAL_GetTick();
+		ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) ChargeIsOver_160x128);
+				//ST7735_DrawString(0,0, "Charging is   over. Remove  the connector" , Font_11x18, ST7735_BLACK, 0x07E0);
+				HAL_Delay(1000);
+				PreviousState = 0b10;
+				rezult=0;
+
+				return;
+
+			}
+
+
+
+	switch(pilotSave)
+	{
+	case 0b00:
+
+			if(PreviousState!=0b00)
+			{	ST7735_FillScreen(0x07E0);
+			hargeflagg=0;
+
+			ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) ConnectorRemoved_160x128);
+			//	ST7735_DrawString(0,0, "Connector removed" , Font_11x18, ST7735_BLACK, 0x07E0);
+				StopTimer();
+				HAL_Delay(1000);
+
+				VoltPilotStatus=9;
+
+			}
+			else
+			{
+				ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) PlagInConnector_160x128);
+				//ST7735_DrawString(0,0, "Plug in the   connector of  the charging   station" , Font_11x18, ST7735_BLACK, 0x07E0);
+			}
+
+		break;
+	case 0b10:
+			ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) WaitStart_160x128);
+			//ST7735_DrawString(0,0, "Wait for the  start of the  charge" , Font_11x18, ST7735_BLACK, 0x07E0);
+
+//		}
+		break;
+	case 0b110:
+
+			if(PreviousState==0b110)
+					{hargeflagg=1;
+
+						interface();
+						PreviousState=0b0110;
+						rezult=0;
+						demofloat(voltPN, voltGN, AmperPh, AmperN);
+
+					return;
+					}
+
+				if(Statusflag==11)
+				{hargeflagg=1;
+				startChrgeTime  =HAL_GetTick();
+				finishChrgeTime =startChrgeTime;
+				ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) ChargeStart_160x128);
+				//ST7735_DrawString(0,0, "Charging start" , Font_11x18, ST7735_BLACK, 0x07E0);
+				}
+				else
+				{
+				ST7735_DrawString(0,0, "Error ground" , Font_11x18, ST7735_BLACK, 0x07E0);
+				PreviousState=0;
+				return;
+				}
+
+				HAL_Delay(1000);
+				ST7735_FillScreen(0x07E0);
+		break;
+
+	case 0b1110:
+
+		if(PreviousState==0b110||PreviousState==0b1110)
+				{hargeflagg=1;
+					interface();
+					PreviousState=0b01110;
+					rezult=0;
+					demofloat(voltPN, voltGN, AmperPh, AmperN);
+
+				return;
+				}
+
+			if(Statusflag==11)
+			{hargeflagg=1;
+			ST7735_DrawImage(0, 0, 160, 128, (uint16_t*) ChargeStart_160x128);
+			//ST7735_DrawString(0,0, "Charging start" , Font_11x18, ST7735_BLACK, 0x07E0);
+			}
+			else
+			{
+			ST7735_DrawString(0,0, "Error ground" , Font_11x18, ST7735_BLACK, 0x07E0);
+			PreviousState=0;
+			return;
+			}
+
+			HAL_Delay(1000);
+			ST7735_FillScreen(0x07E0);
+			ST7735_DrawString(0,0, "Error#1" , Font_11x18, ST7735_BLACK, 0x07E0);
+
+		break;
+
+
+
+
+	case 0b1111:
+
+	contactor(0);
+		ST7735_DrawString(0,0, "Error ground" , Font_11x18, ST7735_BLACK, 0x07E0);
+
+
+			break;
+
+
+
+	default:
+		ST7735_DrawString(0,0, "Unknown error contact       manufacturer" , Font_11x18, ST7735_BLACK, 0x07E0);
+		hargeflagg=0;
+		break;
+
+
+	}
+	 if(PreviousState == pilotSave)
+	{rezult=0;}
+	 PreviousState = pilotSave;
+
+
+}
+////////////////////////////////////////////////////////////////////////////////////////
 int main(void)
 {
-
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
-  /* USER CODE END Init */
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-  /* Configure the system clock */
   SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
-//  MX_SPI2_Init();
+  ST7735_Init();
+  demoView();
   InitSPI2();
- // MX_USART2_UART_Init();
   MX_TIM4_Init();
-  MX_TIM3_Init();
+ // MX_TIM3_Init();
+  I_PWM.I_PWM_FaseA = 7;	//7% заполнения Ш�?М
+  HAL_TIM_Base_Start_IT(&htim3);
 
-  /* USER CODE BEGIN 2 */
-  I_PWM.I_PWM_FaseA = 50;	//7% заполнения Ш�?М
 
 
-    ST7735_Init();
-    ST7735_Backlight_On();
-   // ST7735_Backlight_On();
-  /* USER CODE END 2 */
-    HAL_TIM_Base_Start_IT(&htim3);
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-    ST7735_FillScreen(0x07E0);
   while (1)
-  {//ST7735_FillScreen(0x07E0);
-	  //while((statADCBuffRefresh & ADCBuffRefresh) == 0);
-	  ST7735_FillScreen(0x07E0);
-	 BaseWork();
+  {
+	  CheckPilotStart();
+	  ProgramCycle();
+	  demoPilotSignal();
 
-	// checkPilot();
-	  //demoView();
+	  if(rezult!=0)
+	  {
+		  ST7735_FillScreen(0x07E0);
+	  }
 
-	 // demo(per1,per1,per1,per1);
-    /* USER CODE END WHILE */
-	  //demoTFT();//демонстрация работы дисплея
-    /* USER CODE BEGIN 3 */
+
+
   }
-  /* USER CODE END 3 */
+
 }
 
 /**
